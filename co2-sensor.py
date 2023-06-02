@@ -34,13 +34,16 @@ class SerialPort:
                 self.uart = serial.Serial(self.port, self.baudrate)
 
     def readLine(self):
-        result = ""
+        result = None
         if self.uart.isOpen():
             result = self.uart.readline()
         return result
 
     def readlineUtf8Trim(self):
-        return self.readLine().decode('utf-8').strip()
+        result = self.readLine()
+        if result != None:
+            result = result.decode('utf-8').strip()
+        return result
 
     def write(self, data):
         if self.uart.isOpen():
@@ -54,28 +57,39 @@ class SerialPort:
             self.uart.close()
 
 
+class UsbCo2Sensor:
+    def __init__(self, port):
+        self.uart = SerialPort(port, 115200)
+        self.uart.writeLine("STA")
+        self.uart.readlineUtf8Trim()
+
+    def getRawData(self):
+        result = ""
+        try:
+            result = self.uart.readlineUtf8Trim()
+        except serial.serialutil.SerialTimeoutException as e:
+            print(f'error: {e}')
+
+        except KeyboardInterrupt:
+            self.close()
+
+        return result
+
+    def close(self):
+        self.uart.writeLine("STP")
+        self.uart.close()
+
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='USB CO2 Sensor reader')
     parser.add_argument('-p', '--port', action='store', default="/dev/tty.usbmodem101", help='Set USB Serial Port e.g. /dev/tty.usbmodem101 or com1:, etc.')
     args = parser.parse_args()
 
-    uart = SerialPort(args.port, 115200)
+    sensor = UsbCo2Sensor(args.port)
 
-    try:
-        uart.writeLine("STA")
-        uart.readlineUtf8Trim()
-
-        while(True):
-            print( uart.readlineUtf8Trim() )
-
-        uart.writeLine("STP")
-
-    except serial.serialutil.SerialTimeoutException as e:
-        print(f'error: {e}')
-
-    except KeyboardInterrupt:
-        uart.close()
-
-    finally:
-        uart.close()
+    result = True
+    while(result):
+        result = sensor.getRawData()
+        if result:
+            print( result )
 
