@@ -75,6 +75,24 @@ class UsbCo2Sensor:
 
         return result
 
+    def getVal(self, keyValue):
+        _keyVal = keyValue.split("=")
+        if len(_keyVal)==2:
+            return _keyVal[1].strip()
+        return keyValue
+
+    def getParsedResult(self):
+        result = None
+        rawData = self.getRawData() #e.g. is "CO2=955,HUM=46.3,TMP=32.0"
+        data = rawData.split(",")
+        if len(data)==3:
+            result = {
+                "co2": self.getVal(data[0]),
+                "humidity" : self.getVal(data[1]),
+                "temperature" : self.getVal(data[2])
+            }
+        return result
+
     def close(self):
         self.uart.writeLine("STP")
         self.uart.close()
@@ -89,7 +107,7 @@ if __name__=="__main__":
 
     result = True
     while(result):
-        result = sensor.getRawData()
+        result = sensor.getParsedResult()
         if result:
             print( result )
 
