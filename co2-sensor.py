@@ -1,4 +1,5 @@
-#!/bin/bash env python3
+#!/usr/bin/env python3
+# coding: utf-8
 
 #   Copyright 2023 hidenorly
 #
@@ -17,6 +18,7 @@
 import argparse
 import serial
 import serial.serialutil
+import json
 
 class SerialPort:
     def __init__(self, port, baudrate, timeoutSec = None):
@@ -101,13 +103,19 @@ class UsbCo2Sensor:
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='USB CO2 Sensor reader')
     parser.add_argument('-p', '--port', action='store', default="/dev/tty.usbmodem101", help='Set USB Serial Port e.g. /dev/tty.usbmodem101 or com1:, etc.')
+    parser.add_argument('-l', '--log', action='store', default=None, help='Set log file')
     args = parser.parse_args()
 
     sensor = UsbCo2Sensor(args.port)
+    logOut = None
+    if args.log:
+        logOut = open(args.log, "a", encoding="utf-8")
 
     result = True
     while(result):
         result = sensor.getParsedResult()
         if result:
             print( result )
+            if logOut:
+                logOut.write( json.dumps(result)+"\n" )
 
