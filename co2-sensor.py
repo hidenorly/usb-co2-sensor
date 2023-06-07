@@ -20,6 +20,7 @@ import serial
 import serial.serialutil
 import json
 from datetime import datetime
+import time
 
 class SerialPort:
     def __init__(self, port, baudrate, timeoutSec = None):
@@ -106,6 +107,7 @@ if __name__=="__main__":
     parser.add_argument('-p', '--port', action='store', default="/dev/tty.usbmodem101", help='Set USB Serial Port e.g. /dev/tty.usbmodem101 or com1:, etc.')
     parser.add_argument('-l', '--log', action='store', default=None, help='Set log file')
     parser.add_argument('-t', '--time', action='store_true', default=False, help='Set this if need time')
+    parser.add_argument('-s', '--sampleDuration', type=int, action='store', default=1, help='Set sample duration, print/log out exceed this')
     args = parser.parse_args()
 
     sensor = UsbCo2Sensor(args.port)
@@ -114,12 +116,16 @@ if __name__=="__main__":
         logOut = open(args.log, "a", encoding="utf-8")
 
     result = True
+    lastTime = time.time()
     while(result):
         result = sensor.getParsedResult()
+        nowTime = time.time()
         if result:
             if args.time:
                 result["time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            print( result )
-            if logOut:
-                logOut.write( json.dumps(result)+"\n" )
+            if (nowTime - lastTime) >= args.sampleDuration:
+                lastTime = nowTime
+                print( result )
+                if logOut:
+                    logOut.write( json.dumps(result)+"\n" )
 
