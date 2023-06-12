@@ -25,3 +25,14 @@ options:
   -s SAMPLEDURATION, --sampleDuration SAMPLEDURATION
                         Set sample duration, print/log out exceed this
 ```
+
+```
+$ python3 co2-sensor.py -p /dev/tty.usbmodem101 -l ./log.txt -t -s 60
+```
+
+```log.txt
+{"co2": "1017", "humidity": "41.6", "temperature": "29.0", "time": "2023-06-04 11:45:19"}
+{"co2": "1017", "humidity": "41.6", "temperature": "29.0", "time": "2023-06-04 11:45:25"}
+{"co2": "1016", "humidity": "41.6", "temperature": "29.0", "time": "2023-06-04 11:45:31"}
+{"co2": "1016", "humidity": "41.6", "temperature": "29.0", "time": "2023-06-04 11:45:37"}
+```
