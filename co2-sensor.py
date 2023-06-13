@@ -102,6 +102,43 @@ class UsbCo2Sensor:
         self.uart.close()
 
 
+class Reporter:
+    def __init__(self, stream = None):
+        self.stream = stream
+
+    def _print(self, data):
+        if self.stream:
+            self.stream.write( str(data) + "\n" )
+        else:
+            print( str(data) )
+
+    def print(self, data):
+        self._print(data)
+
+    def close(self):
+        if self.stream:
+            self.stream.close()
+        self.stream = None
+
+    def __del__(self):
+        if self.stream:
+            self.close()
+
+
+class JsonReporter(Reporter):
+    def __init__(self, stream = None):
+        super().__init__(stream)
+        self._print("[")
+
+    def print(self, data):
+        self._print( json.dumps(data) + "," )
+
+    def close(self):
+        self._print("]")
+        super().close()
+
+
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='USB CO2 Sensor reader')
     parser.add_argument('-p', '--port', action='store', default="/dev/tty.usbmodem101", help='Set USB Serial Port e.g. /dev/tty.usbmodem101 or com1:, etc.')
@@ -114,6 +151,7 @@ if __name__=="__main__":
     logOut = None
     if args.log:
         logOut = open(args.log, "a", encoding="utf-8")
+    reporter = JsonReporter(logOut)
 
     result = True
     lastTime = time.time()
@@ -125,7 +163,6 @@ if __name__=="__main__":
                 result["time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             if (nowTime - lastTime) >= args.sampleDuration:
                 lastTime = nowTime
-                print( result )
-                if logOut:
-                    logOut.write( json.dumps(result)+"\n" )
+                reporter.print( result )
 
+    reporter.close()
