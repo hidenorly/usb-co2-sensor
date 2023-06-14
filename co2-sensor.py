@@ -131,12 +131,25 @@ class JsonReporter(Reporter):
         self._print("[")
 
     def print(self, data):
-        self._print( json.dumps(data) + "," )
+        self._print( "\t" + json.dumps(data) + "," )
 
     def close(self):
         self._print("]")
         super().close()
 
+
+class CsvReporter(Reporter):
+    def __init__(self, stream = None, enableColumnFirstLine = False):
+        super().__init__(stream)
+        self.alreadyColumnOutput = False
+
+    def print(self, data):
+        if not self.alreadyColumnOutput:
+            self.alreadyColumnOutput = True
+            columns = "#" + ",".join(data.keys())
+            if columns!="#":
+                self._print(columns)
+        self._print( ",".join(data.values()) )
 
 
 if __name__=="__main__":
@@ -145,13 +158,19 @@ if __name__=="__main__":
     parser.add_argument('-l', '--log', action='store', default=None, help='Set log file')
     parser.add_argument('-t', '--time', action='store_true', default=False, help='Set this if need time')
     parser.add_argument('-s', '--sampleDuration', type=int, action='store', default=1, help='Set sample duration, print/log out exceed this')
+    parser.add_argument('-f', '--format', action='store', default="json", help='Set output format json or csv')
     args = parser.parse_args()
 
     sensor = UsbCo2Sensor(args.port)
     logOut = None
     if args.log:
         logOut = open(args.log, "a", encoding="utf-8")
-    reporter = JsonReporter(logOut)
+    reporter = Reporter
+    if args.format == "json":
+        reporter = JsonReporter
+    elif args.format == "csv":
+        reporter = CsvReporter
+    reporter = reporter(logOut)
 
     result = True
     lastTime = time.time()
