@@ -103,8 +103,19 @@ class UsbCo2Sensor:
 
 
 class Reporter:
-    def __init__(self, stream = None):
+    def __init__(self, stream = None, outputCols=None):
         self.stream = stream
+        self.outputCols = outputCols
+
+    def _filterCols(self, data):
+        result = {}
+        if self.outputCols:
+            for aCol in self.outputCols.split(","):
+                if aCol in data:
+                    result[aCol] = data[aCol]
+        else:
+            result = data
+        return result
 
     def _print(self, data):
         if self.stream:
@@ -113,6 +124,7 @@ class Reporter:
             print( str(data) )
 
     def print(self, data):
+        data = self._filterCols(data)
         self._print(data)
 
     def close(self):
@@ -126,11 +138,12 @@ class Reporter:
 
 
 class JsonReporter(Reporter):
-    def __init__(self, stream = None):
-        super().__init__(stream)
+    def __init__(self, stream = None, outputCols=None):
+        super().__init__(stream, outputCols)
         self._print("[")
 
     def print(self, data):
+        data = self._filterCols(data)
         self._print( "\t" + json.dumps(data) + "," )
 
     def close(self):
@@ -139,11 +152,12 @@ class JsonReporter(Reporter):
 
 
 class CsvReporter(Reporter):
-    def __init__(self, stream = None, enableColumnFirstLine = False):
-        super().__init__(stream)
+    def __init__(self, stream = None, outputCols=None, enableColumnFirstLine = False):
+        super().__init__(stream, outputCols)
         self.alreadyColumnOutput = False
 
     def print(self, data):
+        data = self._filterCols(data)
         if not self.alreadyColumnOutput:
             self.alreadyColumnOutput = True
             columns = "#" + ",".join(data.keys())
@@ -153,12 +167,14 @@ class CsvReporter(Reporter):
 
 
 if __name__=="__main__":
-    parser = argparse.ArgumentParser(description='USB CO2 Sensor reader')
+    parser = argparse.ArgumentParser(description='USB CO2 Sensor reader', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-p', '--port', action='store', default="/dev/tty.usbmodem101", help='Set USB Serial Port e.g. /dev/tty.usbmodem101 or com1:, etc.')
     parser.add_argument('-l', '--log', action='store', default=None, help='Set log file')
     parser.add_argument('-t', '--time', action='store_true', default=False, help='Set this if need time')
     parser.add_argument('-s', '--sampleDuration', type=int, action='store', default=1, help='Set sample duration, print/log out exceed this')
     parser.add_argument('-f', '--format', action='store', default="json", help='Set output format json or csv')
+    parser.add_argument('-c', '--outputCols', action='store', default="time,co2,humidity,temperature", help='Set output columns')
+
     args = parser.parse_args()
 
     sensor = UsbCo2Sensor(args.port)
@@ -170,7 +186,7 @@ if __name__=="__main__":
         reporter = JsonReporter
     elif args.format == "csv":
         reporter = CsvReporter
-    reporter = reporter(logOut)
+    reporter = reporter(logOut, args.outputCols)
 
     result = True
     lastTime = time.time()
