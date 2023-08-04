@@ -13,7 +13,7 @@ pip install pyserial
 # how-to-use
 
 ```
-usage: co2-sensor.py [-h] [-p PORT] [-l LOG] [-t] [-s SAMPLEDURATION]
+usage: co2-sensor.py [-h] [-p PORT] [-l LOG] [-t] [-s SAMPLEDURATION] [-f FORMAT]
 
 USB CO2 Sensor reader
 
@@ -24,15 +24,17 @@ options:
   -t, --time            Set this if need time
   -s SAMPLEDURATION, --sampleDuration SAMPLEDURATION
                         Set sample duration, print/log out exceed this
-```
+  -f FORMAT, --format FORMAT
+                        Set output format json or csv```
 
 ```
-$ python3 co2-sensor.py -p /dev/tty.usbmodem101 -l ./log.txt -t -s 60
+$ python3 co2-sensor.py -p /dev/tty.usbmodem101 -l ./log.txt -t -s 2
 ```
 
 ```log.txt
-{"co2": "1017", "humidity": "41.6", "temperature": "29.0", "time": "2023-06-04 11:45:19"}
-{"co2": "1017", "humidity": "41.6", "temperature": "29.0", "time": "2023-06-04 11:45:25"}
-{"co2": "1016", "humidity": "41.6", "temperature": "29.0", "time": "2023-06-04 11:45:31"}
-{"co2": "1016", "humidity": "41.6", "temperature": "29.0", "time": "2023-06-04 11:45:37"}
+[
+  {"co2": "837", "humidity": "42.4", "temperature": "29.4", "time": "2023-06-14 21:13:13"},
+  {"co2": "837", "humidity": "42.4", "temperature": "29.4", "time": "2023-06-14 21:13:15"},
+  {"co2": "837", "humidity": "42.4", "temperature": "29.4", "time": "2023-06-14 21:13:17"},
+]
 ```
